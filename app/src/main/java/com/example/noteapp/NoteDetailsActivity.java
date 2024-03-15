@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -17,7 +18,7 @@ public class NoteDetailsActivity extends AppCompatActivity {
 
     EditText titleEditText, contentEditText;
     ImageButton saveNoteButton;
-    TextView pageTitleTextView;
+    TextView pageTitleTextView, deleteNoteTvBtn;
     String title, content, docId;
     boolean isEditMode = false;
 
@@ -30,6 +31,7 @@ public class NoteDetailsActivity extends AppCompatActivity {
         contentEditText = findViewById(R.id.notes_content_text);
         saveNoteButton = findViewById(R.id.save_note_btn);
         pageTitleTextView = findViewById(R.id.page_title);
+        deleteNoteTvBtn = findViewById(R.id.delete_note_tvBtn);
 
         //receive data
         title = getIntent().getStringExtra("title");
@@ -44,11 +46,16 @@ public class NoteDetailsActivity extends AppCompatActivity {
         contentEditText.setText(content);
         if (isEditMode){
             pageTitleTextView.setText("Edit your note");
+            deleteNoteTvBtn.setVisibility(View.VISIBLE);
         }
 
 
         saveNoteButton.setOnClickListener(v->saveNote());
+
+        deleteNoteTvBtn.setOnClickListener(v->deleteNoteFromFirebase());
     }
+
+
 
     void saveNote(){
         String noteTitle = titleEditText.getText().toString();
@@ -78,10 +85,30 @@ public class NoteDetailsActivity extends AppCompatActivity {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if (task.isSuccessful()){
-                    Utility.showToast(NoteDetailsActivity.this, "Note add successfully");
+                    if (isEditMode){
+                        Utility.showToast(NoteDetailsActivity.this, "Note edit successfully");
+                    }else {
+                        Utility.showToast(NoteDetailsActivity.this, "Note add successfully");
+                    }
                     finish();
                 }else {
                     Utility.showToast(NoteDetailsActivity.this, "Failed while adding note");
+                }
+            }
+        });
+    }
+
+    private void deleteNoteFromFirebase() {
+        DocumentReference documentReference;
+        documentReference = Utility.getCollectionReferenceForNotes().document(docId);
+        documentReference.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()){
+                    Utility.showToast(NoteDetailsActivity.this, "Note deleted successfully");
+                    finish();
+                }else {
+                    Utility.showToast(NoteDetailsActivity.this, "Failed while deleting note");
                 }
             }
         });
